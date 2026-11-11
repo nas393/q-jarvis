@@ -5,7 +5,7 @@ export function getAIConfig():ProviderConfig{
  const apiKey=process.env.OPENAI_API_KEY;
  if(provider!=="openai")throw new Error("Configured AI provider is not supported yet");
  if(!apiKey)throw new Error("OPENAI_API_KEY is not configured");
- return {provider,model:process.env.OPENAI_MODEL??"gpt-6.1-terra",apiKey};
+ return {provider,model:process.env.OPENAI_MODEL??"gpt-6-luna",apiKey};
 }
 export async function createAIStream(input:ChatTurn[],signal?:AbortSignal){
  const config=getAIConfig();
