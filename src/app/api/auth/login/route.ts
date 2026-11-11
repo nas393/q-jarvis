@@ -2,7 +2,7 @@ import {NextResponse} from "next/server";
 import bcrypt from "bcryptjs";
 import {z} from "zod";
 import {getDb} from "@/lib/db";
-import {getEnv} from "@/lib/env";
+import {getAuthEnv} from "@/lib/env";
 import {createSession} from "@/lib/session";
 import {writeAudit} from "@/lib/audit";
 import {jsonError,requestOriginAllowed} from "@/lib/http";
@@ -12,7 +12,7 @@ export async function POST(request:Request){
  if(!requestOriginAllowed(request))return jsonError(403,"Request origin rejected");
  const parsed=schema.safeParse(await request.json().catch(()=>null));
  if(!parsed.success)return jsonError(400,"Invalid credentials payload");
- let env;try{env=getEnv();}catch{return jsonError(503,"Authentication is not configured");}
+ let env;try{env=getAuthEnv();}catch{return jsonError(503,"Authentication is not configured");}
  const email=parsed.data.email.trim().toLowerCase();
  const ip=request.headers.get("x-forwarded-for")?.split(",")[0]?.trim()??"unknown";
  const digest=await crypto.subtle.digest("SHA-256",new TextEncoder().encode(env.AUTH_SECRET+":"+email+":"+ip));
