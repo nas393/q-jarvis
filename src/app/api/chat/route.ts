@@ -24,7 +24,15 @@ export async function POST(request:Request){
   const history=await db.query("SELECT role,content FROM messages WHERE conversation_id=$1 AND role IN ('user','assistant') ORDER BY created_at DESC LIMIT 30",[activeConversationId]);
   const turns=history.rows.reverse().map((row:{role:"user"|"assistant";content:string})=>({role:row.role,content:row.content}));
   const upstream=await createAIStream(turns,request.signal);
-  if(!upstream.ok||!upstream.body){await writeAudit({userId:OWNER_ID,actorType:"owner",actorId:OWNER_ID,action:"chat.response",outcome:"failed",details:{provider:config.provider,status:upstream.status}});return jsonError(502,"AI provider request failed. Check provider configuration and billing.");}
+  if(!upstream.ok||!upstream.body){
+   const raw=await upstream.text().catch(()=>"");
+   let providerMessage="";let providerCode="";
+   try{const payload=JSON.parse(raw);providerMessage=String(payload?.error?.message??"");providerCode=String(payload?.error?.code??payload?.error?.type??"");}catch{}
+   console.error("ai_provider_rejected_request",{status:upstream.status,code:providerCode,message:providerMessage.slice(0,240)});
+   await writeAudit({userId:OWNER_ID,actorType:"owner",actorId:OWNER_ID,action:"chat.response",outcome:"failed",details:{provider:config.provider,status:upstream.status,code:providerCode}});
+   const detail=providerMessage?providerMessage.slice(0,180):"Check the API key, model access and billing.";
+   return jsonError(502,`AI provider error (${upstream.status})${providerCode?` [${providerCode}]`:""}: ${detail}`);
+  }
   const reader=upstream.body.getReader();const decoder=new TextDecoder();let buffer="";let answer="";
   const stream=new ReadableStream<Uint8Array>({async pull(controller){try{
     while(true){const {value,done}=await reader.read();if(done){if(answer.trim()){await db.query("INSERT INTO messages (conversation_id,role,content,metadata) VALUES ($1,'assistant',$2,$3::jsonb)",[activeConversationId,answer,JSON.stringify({provider:config.provider,model:config.model})]);await db.query("UPDATE conversations SET updated_at=now() WHERE id=$1",[activeConversationId]);await writeAudit({userId:OWNER_ID,actorType:"owner",actorId:OWNER_ID,action:"chat.response",outcome:"succeeded",details:{provider:config.provider,model:config.model}});}controller.enqueue(new TextEncoder().encode(`data: ${JSON.stringify({done:true,conversationId:activeConversationId})}\n\n`));controller.close();return;}
