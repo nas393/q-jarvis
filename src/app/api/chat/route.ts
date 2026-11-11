@@ -19,8 +19,8 @@ export async function POST(request:Request){
  try{
   if(conversationId){const check=await db.query("SELECT id FROM conversations WHERE id=$1 AND user_id=$2 AND status='active'",[conversationId,OWNER_ID]);if(!check.rowCount)return jsonError(404,"Conversation not found.");}
   else{const created=await db.query("INSERT INTO conversations (user_id,title) VALUES ($1,$2) RETURNING id",[OWNER_ID,parsed.data.message.slice(0,72)]);conversationId=created.rows[0].id;}
-  await db.query("INSERT INTO messages (conversation_id,role,content) VALUES ($1,'user',$2)",[conversationId,parsed.data.message]);
-  const history=await db.query("SELECT role,content FROM messages WHERE conversation_id=$1 AND role IN ('user','assistant') ORDER BY created_at DESC LIMIT 30",[conversationId]);
+  await db.query("INSERT INTO messages (conversation_id,role,content) VALUES ($1,'user',$2)",[activeConversationId,parsed.data.message]);
+  const activeConversationId=conversationId as string;\n  const history=await db.query("SELECT role,content FROM messages WHERE conversation_id=$1 AND role IN ('user','assistant') ORDER BY created_at DESC LIMIT 30",[conversationId]);
   const turns=history.rows.reverse().map((row:{role:"user"|"assistant";content:string})=>({role:row.role,content:row.content}));
   const upstream=await createAIStream(turns,request.signal);
   if(!upstream.ok||!upstream.body){const detail=await upstream.text().catch(()=>"");await writeAudit({userId:OWNER_ID,actorType:"owner",actorId:OWNER_ID,action:"chat.response",outcome:"failed",details:{provider:config.provider,status:upstream.status}});return jsonError(502,"AI provider request failed. Check provider configuration and billing.");}
