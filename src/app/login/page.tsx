@@ -1,6 +1,2 @@
-"use client";
-import {FormEvent,useState} from "react";
-import {useRouter} from "next/navigation";
-export default function LoginPage(){const router=useRouter();const [email,setEmail]=useState("");const [password,setPassword]=useState("");const [error,setError]=useState("");const [busy,setBusy]=useState(false);
-async function submit(event:FormEvent<HTMLFormElement>){event.preventDefault();setBusy(true);setError("");try{const response=await fetch("/api/auth/login",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({email,password})});const data=await response.json();if(!response.ok)throw new Error(data.error??"Sign-in failed");router.replace("/dashboard");router.refresh();}catch(e){setError(e instanceof Error?e.message:"Sign-in failed");}finally{setBusy(false);}}
-return <main className="login-shell"><section className="login-card"><div className="brand-mark">Q<span>.</span></div><p className="eyebrow">PRIVATE OPERATIONS INTERFACE</p><h1>Q JARVIS</h1><p className="muted">Owner access only. Authenticate to continue.</p><form onSubmit={submit} className="login-form"><label>Email address<input type="email" autoComplete="username" required value={email} onChange={e=>setEmail(e.target.value)}/></label><label>Password<input type="password" autoComplete="current-password" required value={password} onChange={e=>setPassword(e.target.value)}/></label>{error&&<p className="form-error" role="alert">{error}</p>}<button disabled={busy} type="submit">{busy?"Authenticating…":"Secure sign in"}</button></form><p className="login-foot">STAGE 1 FOUNDATION <span>•</span> ENCRYPTED SESSION</p></section></main>;}
+import {redirect} from "next/navigation";
+export default function LoginPage(){redirect("/dashboard");}
