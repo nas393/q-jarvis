@@ -16,7 +16,7 @@ export async function POST(request:Request){
  if(!requestOriginAllowed(request))return jsonError(403,"Request origin rejected");
  const parsed=z.object({message:z.string().trim().min(1).max(12000),conversationId:z.string().uuid().optional()}).safeParse(await request.json().catch(()=>null));
  if(!parsed.success)return jsonError(400,"Enter a message (maximum 12,000 characters).");
- let config;try{config=getAIConfig();}catch{return jsonError(503,"AI provider is not configured. Add OPENAI_API_KEY in Vercel Preview.");}
+ let config;try{config=getAIConfig();}catch{return jsonError(503,"AI provider is not configured. Add GEMINI_API_KEY and optionally GROQ_API_KEY in Vercel.");}
  const db=getDb();let conversationId=parsed.data.conversationId;console.error("q_chat_stage","provider_configured");
  try{
   if(conversationId){const check=await db.query("SELECT id FROM conversations WHERE id=$1 AND user_id=$2 AND status='active'",[conversationId,OWNER_ID]);if(!check.rowCount)return jsonError(404,"Conversation not found.");}
@@ -27,7 +27,9 @@ export async function POST(request:Request){
   const turns=history.rows.reverse().map((row:{role:"user"|"assistant";content:string})=>({role:row.role,content:row.content}));
   console.error("q_chat_stage","history_loaded",{turns:turns.length});
   const upstream=await createAIStream(turns,request.signal);
-  console.error("q_chat_stage","provider_http_response",{status:upstream.status});
+  const actualProvider=upstream.headers.get("x-ai-provider")??config.provider;
+  const actualModel=upstream.headers.get("x-ai-model")??config.model;
+  console.error("q_chat_stage","provider_http_response",{status:upstream.status,provider:actualProvider});
   const raw=await upstream.text().catch(()=>"");
   if(!upstream.ok){
    let providerMessage="";let providerCode="";
@@ -47,7 +49,7 @@ export async function POST(request:Request){
   }
   await db.query("INSERT INTO messages (conversation_id,role,content,metadata) VALUES ($1,'assistant',$2,$3::jsonb)",[activeConversationId,answer,JSON.stringify({provider:actualProvider,model:actualModel})]);
   await db.query("UPDATE conversations SET updated_at=now() WHERE id=$1",[activeConversationId]);
-  await writeAudit({userId:OWNER_ID,actorType:"owner",actorId:OWNER_ID,action:"chat.response",outcome:"succeeded",details:{provider:config.provider,model:config.model}});
+  await writeAudit({userId:OWNER_ID,actorType:"owner",actorId:OWNER_ID,action:"chat.response",outcome:"succeeded",details:{provider:actualProvider,model:actualModel}});
   const encoder=new TextEncoder();
   const stream=new ReadableStream<Uint8Array>({start(controller){
    controller.enqueue(encoder.encode(`data: ${JSON.stringify({delta:answer,conversationId:activeConversationId})}\\n\\n`));
