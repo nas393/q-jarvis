@@ -33,7 +33,7 @@ export async function POST(request:Request){
    let providerMessage="";let providerCode="";
    try{const payload=JSON.parse(raw) as ProviderResponse;providerMessage=String(payload.error?.message??"");providerCode=String(payload.error?.code??payload.error?.type??"");}catch{}
    console.error("ai_provider_rejected_request",{status:upstream.status,code:providerCode,message:providerMessage.slice(0,240)});
-   await writeAudit({userId:OWNER_ID,actorType:"owner",actorId:OWNER_ID,action:"chat.response",outcome:"failed",details:{provider:config.provider,status:upstream.status,code:providerCode}});
+   await writeAudit({userId:OWNER_ID,actorType:"owner",actorId:OWNER_ID,action:"chat.response",outcome:"failed",details:{provider:actualProvider,status:upstream.status,code:providerCode}});
    return jsonError(502,`AI provider error (${upstream.status})${providerCode?` [${providerCode}]`:""}: ${providerMessage.slice(0,180)||"Check provider configuration and billing."}`);
   }
   let payload:ProviderResponse;
@@ -45,7 +45,7 @@ export async function POST(request:Request){
    console.error("q_chat_stage","empty_model_output",{status:payload.status,reason});
    return jsonError(502,`AI returned no text (${reason}).`);
   }
-  await db.query("INSERT INTO messages (conversation_id,role,content,metadata) VALUES ($1,'assistant',$2,$3::jsonb)",[activeConversationId,answer,JSON.stringify({provider:config.provider,model:config.model})]);
+  await db.query("INSERT INTO messages (conversation_id,role,content,metadata) VALUES ($1,'assistant',$2,$3::jsonb)",[activeConversationId,answer,JSON.stringify({provider:actualProvider,model:actualModel})]);
   await db.query("UPDATE conversations SET updated_at=now() WHERE id=$1",[activeConversationId]);
   await writeAudit({userId:OWNER_ID,actorType:"owner",actorId:OWNER_ID,action:"chat.response",outcome:"succeeded",details:{provider:config.provider,model:config.model}});
   const encoder=new TextEncoder();
