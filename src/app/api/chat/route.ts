@@ -5,6 +5,7 @@ import {createAIStream,getAIConfig} from "@/lib/ai/provider";
 import {jsonError,requestOriginAllowed} from "@/lib/http";
 import {writeAudit} from "@/lib/audit";
 export const runtime="nodejs",dynamic="force-dynamic";
+type ProviderResponse={error?:{message?:unknown;code?:unknown;type?:unknown};output_text?:unknown;output?:Array<{content?:Array<{type?:string;text?:string}>}>;incomplete_details?:{reason?:unknown};status?:unknown};
 const OWNER_ID="owner";
 export async function GET(){
  try{const result=await getDb().query("SELECT id,title,status,created_at,updated_at FROM conversations WHERE user_id=$1 AND status='active' ORDER BY updated_at DESC LIMIT 50",[OWNER_ID]);return NextResponse.json({conversations:result.rows},{headers:{"Cache-Control":"no-store"}});}
@@ -30,14 +31,15 @@ export async function POST(request:Request){
   const raw=await upstream.text().catch(()=>"");
   if(!upstream.ok){
    let providerMessage="";let providerCode="";
-   try{const payload=JSON.parse(raw);providerMessage=String(payload?.error?.message??"");providerCode=String(payload?.error?.code??payload?.error?.type??"");}catch{}
+   try{const payload=JSON.parse(raw) as ProviderResponse;providerMessage=String(payload.error?.message??"");providerCode=String(payload.error?.code??payload.error?.type??"");}catch{}
    console.error("ai_provider_rejected_request",{status:upstream.status,code:providerCode,message:providerMessage.slice(0,240)});
    await writeAudit({userId:OWNER_ID,actorType:"owner",actorId:OWNER_ID,action:"chat.response",outcome:"failed",details:{provider:config.provider,status:upstream.status,code:providerCode}});
    return jsonError(502,`AI provider error (${upstream.status})${providerCode?` [${providerCode}]`:""}: ${providerMessage.slice(0,180)||"Check provider configuration and billing."}`);
   }
-  let payload:any;
-  try{payload=JSON.parse(raw);}catch{return jsonError(502,"AI provider returned an invalid response.");}
-  const answer=String(payload.output_text??payload.output?.flatMap((item:any)=>item.content??[]).filter((part:any)=>part.type==="output_text").map((part:any)=>part.text).join("")??"").trim();
+  let payload:ProviderResponse;
+  try{payload=JSON.parse(raw) as ProviderResponse;}catch{return jsonError(502,"AI provider returned an invalid response.");}
+  const outputText=payload.output?.flatMap(item=>item.content??[]).filter(part=>part.type==="output_text").map(part=>part.text??"").join("");
+  const answer=String(payload.output_text??outputText??"").trim();
   if(!answer){
    const reason=String(payload.incomplete_details?.reason??payload.status??"empty response");
    console.error("q_chat_stage","empty_model_output",{status:payload.status,reason});
