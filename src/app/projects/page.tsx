@@ -9,7 +9,7 @@ const badge=(value:string)=>value==="READY"?"good":value==="ERROR"?"bad":value==
 export default function ProjectsControlTower(){
  const [data,setData]=useState<Payload|null>(null),[loading,setLoading]=useState(true),[error,setError]=useState(""),[filter,setFilter]=useState("ALL"),[query,setQuery]=useState("");
  const refresh=useCallback(async()=>{setLoading(true);setError("");try{const r=await fetch("/api/projects",{cache:"no-store"});if(!r.ok)throw new Error("Unable to load project data");setData(await r.json());}catch(e){setError(e instanceof Error?e.message:"Unknown error");}finally{setLoading(false);}},[]);
- useEffect(()=>{refresh();},[refresh]);
+ useEffect(()=>{refresh();const timer=window.setInterval(refresh,300000);return()=>window.clearInterval(timer);},[refresh]);
  const visible=useMemo(()=>data?.projects.filter(p=>(filter==="ALL"||p.priority===filter)&&(`${p.name} ${p.area} ${p.repo??""}`).toLowerCase().includes(query.toLowerCase()))??[],[data,filter,query]);
  const ready=data?.projects.filter(p=>p.deployment?.state==="READY").length??0;
  const failed=data?.projects.filter(p=>p.deployment?.state==="ERROR").length??0;
