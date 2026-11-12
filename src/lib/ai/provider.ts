@@ -11,5 +11,5 @@ export async function createAIStream(input:ChatTurn[],signal?:AbortSignal){
  const config=getAIConfig();
  const timeout=AbortSignal.timeout(45000);
  const combined=signal?AbortSignal.any([signal,timeout]):timeout;
- return fetch("https://api.openai.com/v1/responses",{method:"POST",headers:{"Authorization":`Bearer ${config.apiKey}`,"Content-Type":"application/json"},body:JSON.stringify({model:config.model,input:input.map(turn=>({role:turn.role,content:turn.content})),reasoning:{effort:"none"},stream:true},),signal:combined});
+ return fetch("https://api.openai.com/v1/responses",{method:"POST",headers:{"Authorization":`Bearer ${config.apiKey}`,"Content-Type":"application/json"},body:JSON.stringify({model:config.model,input:input.map(turn=>({role:turn.role,content:turn.content})),reasoning:{effort:"none"},max_output_tokens:700,stream:false},),signal:combined});
 }
