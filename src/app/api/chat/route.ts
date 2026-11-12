@@ -24,24 +24,35 @@ export async function POST(request:Request){
   await db.query("INSERT INTO messages (conversation_id,role,content) VALUES ($1,'user',$2)",[activeConversationId,parsed.data.message]);
   const history=await db.query("SELECT role,content FROM messages WHERE conversation_id=$1 AND role IN ('user','assistant') ORDER BY created_at DESC LIMIT 30",[activeConversationId]);
   const turns=history.rows.reverse().map((row:{role:"user"|"assistant";content:string})=>({role:row.role,content:row.content}));
-  console.error("q_chat_stage","history_loaded",{turns:turns.length});const upstream=await createAIStream(turns,request.signal);console.error("q_chat_stage","provider_http_response",{status:upstream.status});
-  if(!upstream.ok||!upstream.body){
-   const raw=await upstream.text().catch(()=>"");
+  console.error("q_chat_stage","history_loaded",{turns:turns.length});
+  const upstream=await createAIStream(turns,request.signal);
+  console.error("q_chat_stage","provider_http_response",{status:upstream.status});
+  const raw=await upstream.text().catch(()=>"");
+  if(!upstream.ok){
    let providerMessage="";let providerCode="";
    try{const payload=JSON.parse(raw);providerMessage=String(payload?.error?.message??"");providerCode=String(payload?.error?.code??payload?.error?.type??"");}catch{}
    console.error("ai_provider_rejected_request",{status:upstream.status,code:providerCode,message:providerMessage.slice(0,240)});
    await writeAudit({userId:OWNER_ID,actorType:"owner",actorId:OWNER_ID,action:"chat.response",outcome:"failed",details:{provider:config.provider,status:upstream.status,code:providerCode}});
-   const detail=providerMessage?providerMessage.slice(0,180):"Check the API key, model access and billing.";
-   return jsonError(502,`AI provider error (${upstream.status})${providerCode?` [${providerCode}]`:""}: ${detail}`);
+   return jsonError(502,`AI provider error (${upstream.status})${providerCode?` [${providerCode}]`:""}: ${providerMessage.slice(0,180)||"Check provider configuration and billing."}`);
   }
-  console.error("q_chat_stage","stream_started");const reader=upstream.body.getReader();const decoder=new TextDecoder();let buffer="";let answer="";let firstChunk=true;
-  const stream=new ReadableStream<Uint8Array>({async pull(controller){try{
-    while(true){const {value,done}=await reader.read();if(value){console.error("q_chat_stage","provider_stream_chunk",{bytes:value.byteLength,first:firstChunk});firstChunk=false;}if(done){if(answer.trim()){await db.query("INSERT INTO messages (conversation_id,role,content,metadata) VALUES ($1,'assistant',$2,$3::jsonb)",[activeConversationId,answer,JSON.stringify({provider:config.provider,model:config.model})]);await db.query("UPDATE conversations SET updated_at=now() WHERE id=$1",[activeConversationId]);await writeAudit({userId:OWNER_ID,actorType:"owner",actorId:OWNER_ID,action:"chat.response",outcome:"succeeded",details:{provider:config.provider,model:config.model}});}controller.enqueue(new TextEncoder().encode(`data: ${JSON.stringify({done:true,conversationId:activeConversationId})}\n\n`));controller.close();return;}
-      buffer+=decoder.decode(value,{stream:true});const blocks=buffer.split(/\r?\n\r?\n/);buffer=blocks.pop()??"";
-      for(const block of blocks){const line=block.split(/\r?\n/).find(x=>x.startsWith("data:"));if(!line)continue;const raw=line.slice(5).trim();if(raw==="[DONE]")continue;try{const event=JSON.parse(raw);if(event.type!=="response.output_text.delta")console.error("q_chat_stage","provider_event",{type:event.type});if(event.type==="response.output_text.delta"&&typeof event.delta==="string"){answer+=event.delta;controller.enqueue(new TextEncoder().encode(`data: ${JSON.stringify({delta:event.delta,conversationId:activeConversationId})}\n\n`));}else if(event.type==="error"||event.type==="response.failed"){controller.enqueue(new TextEncoder().encode(`data: ${JSON.stringify({error:"The AI provider could not complete this response."})}\n\n`));}}catch{}}
-      return;
-    }
-  }catch{controller.enqueue(new TextEncoder().encode(`data: ${JSON.stringify({error:"Connection interrupted. Please try again."})}\n\n`));controller.close();}},cancel(){reader.cancel().catch(()=>{});}});
-  return new Response(stream,{headers:{"Content-Type":"text/event-stream; charset=utf-8","Cache-Control":"no-cache, no-transform","Connection":"keep-alive","X-Accel-Buffering":"no"}});
+  let payload:any;
+  try{payload=JSON.parse(raw);}catch{return jsonError(502,"AI provider returned an invalid response.");}
+  const answer=String(payload.output_text??payload.output?.flatMap((item:any)=>item.content??[]).filter((part:any)=>part.type==="output_text").map((part:any)=>part.text).join("")??"").trim();
+  if(!answer){
+   const reason=String(payload.incomplete_details?.reason??payload.status??"empty response");
+   console.error("q_chat_stage","empty_model_output",{status:payload.status,reason});
+   return jsonError(502,`AI returned no text (${reason}).`);
+  }
+  await db.query("INSERT INTO messages (conversation_id,role,content,metadata) VALUES ($1,'assistant',$2,$3::jsonb)",[activeConversationId,answer,JSON.stringify({provider:config.provider,model:config.model})]);
+  await db.query("UPDATE conversations SET updated_at=now() WHERE id=$1",[activeConversationId]);
+  await writeAudit({userId:OWNER_ID,actorType:"owner",actorId:OWNER_ID,action:"chat.response",outcome:"succeeded",details:{provider:config.provider,model:config.model}});
+  const encoder=new TextEncoder();
+  const stream=new ReadableStream<Uint8Array>({start(controller){
+   controller.enqueue(encoder.encode(`data: ${JSON.stringify({delta:answer,conversationId:activeConversationId})}\\n\\n`));
+   controller.enqueue(encoder.encode(`data: ${JSON.stringify({done:true,conversationId:activeConversationId})}\\n\\n`));
+   controller.close();
+  }});
+  return new Response(stream,{headers:{"Content-Type":"text/event-stream; charset=utf-8","Cache-Control":"no-cache, no-transform","X-Accel-Buffering":"no"}});
+
  }catch(e){console.error("q_chat_stage","request_failed",{name:e instanceof Error?e.name:"unknown",message:e instanceof Error?e.message:"unknown"});return jsonError(503,"Chat service temporarily unavailable.");}
 }
