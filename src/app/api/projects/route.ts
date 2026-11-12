@@ -50,7 +50,7 @@ export async function GET() {
     const latest = Array.isArray(deployment?.deployments) ? deployment.deployments[0] : null;
     return {
       ...project,
-      openIssues:Array.isArray(issues) ? issues.filter((item:any)=>!item.pull_request).length : null,
+      openIssues:Array.isArray(issues) ? issues.filter((item:{pull_request?:unknown})=>!item.pull_request).length : null,
       issuesError:issues?.error ?? null,
       lastCommit:Array.isArray(commits) && commits[0] ? { message:commits[0].commit?.message?.split("\n")[0], date:commits[0].commit?.author?.date, url:commits[0].html_url } : null,
       commitError:commits?.error ?? null,
