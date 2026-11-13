@@ -16,3 +16,27 @@
  .simple-mobile .mode-toggle{height:34px!important}
  .simple-mobile .start-menu,.simple-mobile .quick-panel{display:none}
 }
+
+
+/* Q CORE MONITOR — floating Matrix intelligence widget */
+.core-monitor-dock{position:absolute;z-index:10001;right:18px;bottom:62px;font-family:Arial,Helvetica,sans-serif}
+.core-monitor-launch{height:38px;display:flex;align-items:center;gap:9px;padding:0 12px;border:1px solid color-mix(in srgb,var(--accent) 55%,transparent);border-radius:7px;background:color-mix(in srgb,var(--os-panel) 94%,transparent);backdrop-filter:blur(18px);color:var(--os-text);box-shadow:0 8px 28px #0006;cursor:pointer;font-size:9px;letter-spacing:1.2px}
+.core-monitor-launch b{font-size:16px;color:var(--accent)}.core-monitor-launch i{font-style:normal;color:var(--accent);font-size:16px;margin-left:3px}
+.core-live-dot,.core-monitor-status i{width:6px;height:6px;display:inline-block;border-radius:50%;background:var(--accent);box-shadow:0 0 10px var(--accent);animation:core-pulse 1.8s infinite}
+.core-monitor-panel{position:absolute;right:0;bottom:48px;width:min(390px,calc(100vw - 24px));padding:16px 17px 14px;border:1px solid color-mix(in srgb,var(--accent) 48%,var(--os-border));border-radius:10px;background:linear-gradient(155deg,#061512f5,#030b0af7 75%);color:#d9fff0;box-shadow:0 22px 70px #000b,0 0 30px color-mix(in srgb,var(--accent) 10%,transparent);overflow:hidden}
+.core-monitor-panel:before{content:"";position:absolute;left:0;top:0;width:34px;height:3px;background:var(--accent);box-shadow:0 0 14px var(--accent)}
+.core-monitor-panel>header{display:flex;justify-content:space-between;align-items:center;padding:2px 0 12px;border-bottom:1px solid #0a4934}
+.core-monitor-panel>header small,.core-monitor-panel>header b{display:block}.core-monitor-panel>header small{font:8px Consolas,monospace;letter-spacing:2px;color:#63bfa0;margin-bottom:8px}.core-monitor-panel>header b{font-size:15px;letter-spacing:1px}.core-monitor-panel>header em{font-style:normal;color:#00ed98}.core-monitor-panel>header button{border:0;background:transparent;color:#83bca6;font-size:22px;cursor:pointer}
+.core-radar{position:relative;width:250px;height:250px;margin:12px auto 13px;border-radius:50%;display:grid;place-items:center;background:radial-gradient(circle,#06251c 0,#04130f 48%,transparent 70%)}
+.radar-ring{position:absolute;border:1px solid #00d88765;border-radius:50%}.ring-one{inset:9px;border-style:dashed;animation:radar-rotate 28s linear infinite}.ring-two{inset:29px;border-width:2px;border-left-color:transparent;border-right-color:transparent;animation:radar-rotate 19s linear infinite reverse}.ring-three{inset:49px;border-style:dotted;animation:radar-rotate 24s linear infinite}.ring-four{inset:72px;border-color:#00ed986b}
+.radar-cross{position:absolute;background:#00d88735}.cross-x{width:100%;height:1px}.cross-y{height:100%;width:1px}
+.radar-sweep{position:absolute;inset:9px;border-radius:50%;background:conic-gradient(from 0deg,transparent 0deg,transparent 285deg,#00ed9810 320deg,#00ed986c 359deg,transparent 360deg);animation:radar-rotate 5s linear infinite}
+.radar-core{position:relative;width:90px;height:90px;border:1px solid #00ed98;border-radius:50%;background:radial-gradient(circle,#0a3a2b,#04130f 72%);box-shadow:0 0 22px #00ed9830,inset 0 0 16px #00ed9820;display:flex;flex-direction:column;align-items:center;justify-content:center}
+.radar-core strong{font-size:42px;line-height:1;color:#d7fff3}.radar-core small{font:8px Consolas,monospace;letter-spacing:2px;color:#00ed98;margin-top:6px}
+.radar-blip{position:absolute;width:7px;height:7px;border-radius:50%;background:#00ed98;box-shadow:0 0 12px #00ed98}.blip-one{top:8px;left:calc(50% - 3px)}.blip-two{right:26px;bottom:69px;background:#ffae00;box-shadow:0 0 10px #ffae00}
+.core-monitor-status{display:flex;justify-content:space-between;align-items:center;border-top:1px solid #0a4934;padding:10px 0;color:#00ed98;font:8px Consolas,monospace}.core-monitor-status i{margin-right:7px}.core-monitor-status small{color:#6a9d8c;font:8px Consolas,monospace}
+.core-monitor-meta{display:flex;justify-content:space-between;gap:12px;padding:8px 0 12px}.core-monitor-meta small,.core-monitor-meta b{display:block;font-family:Consolas,monospace}.core-monitor-meta small{font-size:7px;letter-spacing:1px;color:#679887;margin-bottom:7px}.core-monitor-meta b{font-size:9px;color:#d2f8e9}
+.core-open-chat{width:100%;display:flex;justify-content:space-between;padding:10px 11px;border:1px solid #087b51;border-radius:5px;background:#06291d;color:#00ed98;font:8px Consolas,monospace;letter-spacing:1.3px;cursor:pointer}.core-open-chat:hover{background:#09402c}
+@keyframes radar-rotate{to{transform:rotate(360deg)}}@keyframes core-pulse{50%{opacity:.35;box-shadow:0 0 3px var(--accent)}}
+@media(max-width:760px){.core-monitor-dock{right:10px;bottom:62px}.core-monitor-panel{width:min(360px,calc(100vw - 20px));bottom:47px;padding:13px}.core-radar{width:220px;height:220px}.core-monitor-meta b{font-size:8px}.simple-mobile .core-monitor-dock{bottom:65px}}
+@media(prefers-reduced-motion:reduce){.radar-ring,.radar-sweep,.core-live-dot{animation:none}}
