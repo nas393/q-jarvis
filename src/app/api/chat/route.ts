@@ -10,7 +10,7 @@ const OWNER_ID="owner";
 type PortfolioProject={
  name:string;registryPriority:string;area:string;recordedNextAction:string;
  repositoryLinked:boolean;vercelProjectLinked:boolean;
- githubDataStatus?:string;vercelDataStatus?:string;
+ githubDataStatus?:string;vercelDataStatus?:string;commitDataStatus?:string;deploymentDataStatus?:string;
  deploymentState?:string;deploymentTarget?:string;
  openGitHubIssues?:number|null;lastCommit?:{message?:string;date?:string}|string;
 };
