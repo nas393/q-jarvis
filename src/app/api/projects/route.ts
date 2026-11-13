@@ -5,7 +5,7 @@ export const revalidate = 0;
 
 const TEAM_ID = "team_sWS7qi1gaGUI9lifKbbjERXj";
 const projects = [
-  { id:"q-jarvis", name:"NASSIM AI HQ / Q", repo:"q-jarvis", vercel:"prj_G87tunS7S6xoJAZyZzEmRIhHAru4", priority:"P1", next:"Build the Command Centre, verify integrations and keep the operating system stable.", area:"Personal HQ" },
+  { id:"q-jarvis", name:"NASSIM AI HQ / Q", repo:"q-jarvis", vercel:"prj_G87tunS7S6xoJAZyZzEmRIhHAru4", priority:"P1", next:"Complete Stage 1 Preview validation, confirm portfolio intelligence and system health, then define the next approved phase.", area:"Personal HQ" },
   { id:"certigo", name:"CERTIGO", repo:"certigo-institute", vercel:"prj_ZxaLAJyMIXizGz8HqpflWC0TjSfG", priority:"P1", next:"Validate the mobile lesson reader and course quality before adding features.", area:"Education" },
   { id:"dalil", name:"DALIL AL-BAZOURIEH", repo:"dalil-al-bazourieh", vercel:"prj_y4i0VPZXxzUhKLvNFOCxwdTSr94v", priority:"P1", next:"Protect the approved design baseline and validate the current mobile experience.", area:"Directory" },
   { id:"lumeris", name:"LUMERIS", repo:null, vercel:"prj_9en6kfMm515bnbkmAgXSpEumh88r", priority:"P1", next:"Maintain the cinematic content system and consistent brand execution.", area:"Media" },
