@@ -2,8 +2,9 @@ export type ChatTurn={role:"user"|"assistant";content:string};
 export type ProviderConfig={provider:"gemini"|"groq";model:string};
 
 type ProviderError={error?:{message?:string;code?:string;status?:string}};
-const GEMINI_MODEL=process.env.GEMINI_MODEL??"gemini-3.8-flash";
-const GROQ_MODEL=process.env.GROQ_MODEL??"openai/gpt-oss-20b";
+const GEMINI_MODEL=process.env.GEMINI_MODEL??"gemini-3.6-flash";
+const GROQ_MODEL=process.env.GROQ_MODEL??"openai/gpt-oss-120b";
+const SYSTEM_PROMPT="You are Q, the personal AI assistant inside a private operating system. Answer ordinary, harmless requests directly and helpfully. Be concise, accurate, and practical. If asked which model or provider is serving the current response, identify yourself as Q and state the configured provider honestly. Never refuse a harmless greeting, simple test, or request to identify the provider.";
 
 export function getAIConfig():ProviderConfig{
  const geminiKey=process.env.GEMINI_API_KEY;
@@ -61,7 +62,7 @@ async function callGroq(input:ChatTurn[],signal?:AbortSignal):Promise<Response>{
  const combined=signal?AbortSignal.any([signal,timeout]):timeout;
  const upstream=await fetch("https://api.groq.com/openai/v1/chat/completions",{
   method:"POST",headers:{"Authorization":`Bearer ${key}`,"Content-Type":"application/json"},
-  body:JSON.stringify({model,messages:input.map(turn=>({role:turn.role,content:turn.content})),max_tokens:1200,temperature:0.7,stream:false}),
+  body:JSON.stringify({model,messages:[{role:"system",content:SYSTEM_PROMPT},...input.map(turn=>({role:turn.role,content:turn.content}))],max_tokens:1200,temperature:0.7,stream:false}),
   signal:combined
  });
  if(!upstream.ok){const err=await readError(upstream);return errorResponse(upstream.status,err.message,err.code,"groq",model);}
@@ -79,7 +80,7 @@ export async function createAIStream(input:ChatTurn[],signal?:AbortSignal):Promi
   try{
    const response=await callGemini(input,signal);
    if(response.ok)return response;
-   geminiFailure=response;
+   geminiFailure=response;\n   const detail=await readError(response.clone());\n   console.error("gemini_provider_http_error",{status:response.status,code:detail.code,message:detail.message.slice(0,180),model:GEMINI_MODEL});
   }catch(error){
    if(signal?.aborted)throw error;
    console.error("gemini_provider_unavailable",{message:error instanceof Error?error.message:"unknown"});
