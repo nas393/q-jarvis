@@ -12,7 +12,7 @@ type PortfolioProject={
  name:string;registryPriority:string;area:string;recordedNextAction:string;
  repositoryLinked:boolean;vercelProjectLinked:boolean;
  githubDataStatus?:string;vercelDataStatus?:string;commitDataStatus?:string;deploymentDataStatus?:string;
- deploymentState?:string;deploymentTarget?:string;
+ deploymentState?:string;deploymentTarget?:string;deploymentSourceRepo?:string|null;deploymentSourceMatches?:boolean|null;
  openGitHubIssues?:number|null;lastCommit?:{message?:string;date?:string}|string;
 };
 function buildPortfolioReview(raw:string):string|null{
@@ -22,7 +22,7 @@ function buildPortfolioReview(raw:string):string|null{
   const now=Date.now();
   const assess=(p:PortfolioProject)=>{
    const priorityScore=p.registryPriority==="P1"?30:p.registryPriority==="P2"?20:p.registryPriority==="P3"?10:0;
-   const deploymentRisk=p.deploymentState==="ERROR"?25:!p.deploymentState||p.deploymentState==="UNKNOWN"?12:0;
+   const deploymentRisk=p.deploymentState==="ERROR"?25:0;
    const hasRepo=p.repositoryLinked;
    const commitDate=typeof p.lastCommit==="object"&&p.lastCommit?p.lastCommit.date:undefined;
    const ageDays=commitDate?Math.max(0,Math.floor((now-Date.parse(commitDate))/86400000)):null;
@@ -43,7 +43,7 @@ function buildPortfolioReview(raw:string):string|null{
   const failures=parsed.projects.filter(p=>p.deploymentState==="ERROR");
   const unknownTargets=parsed.projects.filter(p=>!p.deploymentTarget||p.deploymentTarget==="UNKNOWN").map(p=>p.name);
   const unknownIssues=parsed.projects.filter(p=>p.repositoryLinked&&(p.openGitHubIssues===null||p.openGitHubIssues===undefined)).map(p=>p.name);
-  const unknownCommits=parsed.projects.filter(p=>p.repositoryLinked&&p.commitDataStatus!=="VERIFIED").map(p=>p.name);
+  const unknownCommits=parsed.projects.filter(p=>p.repositoryLinked&&p.commitDataStatus!=="VERIFIED").map(p=>p.name);\n  const unconfiguredVercel=parsed.projects.filter(p=>p.deploymentDataStatus==="NOT_CONFIGURED").map(p=>p.name);\n  const authRequiredGitHub=parsed.projects.filter(p=>p.githubDataStatus==="AUTH_REQUIRED").map(p=>p.name);\n  const sourceMismatches=parsed.projects.filter(p=>p.deploymentSourceMatches===false).map(p=>p.name);
   const recommendation=(p:PortfolioProject)=>{
    if(p.deploymentState==="ERROR")return "Investigate the latest failed deployment, fix the first blocking build/runtime error, and rerun Preview.";
    if(!p.deploymentState||p.deploymentState==="UNKNOWN")return "Verify the Vercel project mapping and retrieve the latest deployment before planning release work.";
