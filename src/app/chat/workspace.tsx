@@ -15,7 +15,8 @@ export default function ChatWorkspace(){
  useEffect(()=>{localStorage.setItem("q-command-tasks",JSON.stringify(tasks))},[tasks]);
  useEffect(()=>{bottom.current?.scrollIntoView({behavior:"smooth"})},[messages]);
  const failed=projects.filter(p=>p.deployment?.state==="ERROR").length;
- const verifiedDeployments=projects.filter(p=>p.deploymentDataStatus==="VERIFIED").length;\n const ready=projects.filter(p=>p.deploymentDataStatus==="VERIFIED"&&p.deployment?.state==="READY").length;
+ const verifiedDeployments=projects.filter(p=>p.deploymentDataStatus==="VERIFIED").length;
+ const ready=projects.filter(p=>p.deploymentDataStatus==="VERIFIED"&&p.deployment?.state==="READY").length;
  const priority=projects.filter(p=>p.priority==="P1");
  const openTasks=tasks.filter(t=>!t.done).length;
  const recent=useMemo(()=>projects.slice(0,8),[projects]);
