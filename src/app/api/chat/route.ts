@@ -39,11 +39,15 @@ function buildPortfolioReview(raw:string):string|null{
   const ranked=parsed.projects.map(assess).sort((a,b)=>b.score-a.score||a.p.name.localeCompare(b.p.name));
   const top=ranked.slice(0,3);
   const tiedAtCutoff=ranked.filter(x=>x.score===top[top.length-1]?.score).length>1;
-  const ready=parsed.projects.filter(p=>p.deploymentState==="READY").length;
-  const failures=parsed.projects.filter(p=>p.deploymentState==="ERROR");
+  const verifiedDeployments=parsed.projects.filter(p=>p.deploymentDataStatus==="VERIFIED").length;
+  const ready=parsed.projects.filter(p=>p.deploymentDataStatus==="VERIFIED"&&p.deploymentState==="READY").length;
+  const failures=parsed.projects.filter(p=>p.deploymentDataStatus==="VERIFIED"&&p.deploymentState==="ERROR");
   const unknownTargets=parsed.projects.filter(p=>!p.deploymentTarget||p.deploymentTarget==="UNKNOWN").map(p=>p.name);
   const unknownIssues=parsed.projects.filter(p=>p.repositoryLinked&&(p.openGitHubIssues===null||p.openGitHubIssues===undefined)).map(p=>p.name);
-  const unknownCommits=parsed.projects.filter(p=>p.repositoryLinked&&p.commitDataStatus!=="VERIFIED").map(p=>p.name);\n  const unconfiguredVercel=parsed.projects.filter(p=>p.deploymentDataStatus==="NOT_CONFIGURED").map(p=>p.name);\n  const authRequiredGitHub=parsed.projects.filter(p=>p.githubDataStatus==="AUTH_REQUIRED").map(p=>p.name);\n  const sourceMismatches=parsed.projects.filter(p=>p.deploymentSourceMatches===false).map(p=>p.name);
+  const unknownCommits=parsed.projects.filter(p=>p.repositoryLinked&&p.commitDataStatus!=="VERIFIED").map(p=>p.name);
+  const unconfiguredVercel=parsed.projects.filter(p=>p.deploymentDataStatus==="NOT_CONFIGURED").map(p=>p.name);
+  const authRequiredGitHub=parsed.projects.filter(p=>p.githubDataStatus==="AUTH_REQUIRED").map(p=>p.name);
+  const sourceMismatches=parsed.projects.filter(p=>p.deploymentSourceMatches===false).map(p=>p.name);
   const recommendation=(p:PortfolioProject)=>{
    if(p.deploymentState==="ERROR")return "Investigate the latest failed deployment, fix the first blocking build/runtime error, and rerun Preview.";
    if(!p.deploymentState||p.deploymentState==="UNKNOWN")return "Verify the Vercel project mapping and retrieve the latest deployment before planning release work.";
@@ -59,7 +63,7 @@ function buildPortfolioReview(raw:string):string|null{
   const gaps=[unknownTargets.length?"deployment target unknown: "+unknownTargets.join(", "):"",unknownIssues.length?"GitHub issue count unknown: "+unknownIssues.join(", "):"",unknownCommits.length?"latest commit unavailable: "+unknownCommits.join(", "):""].filter(Boolean).join("; ")||"No missing fields detected in the supplied integration snapshot.";
   const week=top.map((x,i)=>`Day ${i*2+1}–${i*2+2}: ${x.p.name} — ${recommendation(x.p)}`).join("\n");
   const tieNote=tiedAtCutoff?"The cutoff contains a score tie. The displayed order among equal scores is alphabetical, not evidence of greater urgency; use validation evidence to break the tie.":"";
-  return `**PORTFOLIO HEALTH**\n${ready}/${parsed.projects.length} projects report READY deployments; ${failures.length} report deployment errors. READY is deployment status, not proof of product quality.\n\n**TOP THREE — DYNAMIC EXECUTION PRIORITY**\n${lines}\n${tieNote}\n\n**7-DAY EXECUTION PLAN**\n${week}\nDay 7: Review evidence, refresh project data and re-rank the full portfolio.\n\n**WATCHLIST**\n${watch}\n\n**DATA GAPS**\n${gaps}\n\n**RANKING METHOD**\nExecution-urgency score: P1=30, P2=20, P3=10; deployment ERROR=+25, missing deployment=+12, verified last commit older than 30 days for a linked software repository=+8. Missing data lowers confidence and is never added to urgency. GitHub activity is NOT APPLICABLE to projects without a linked repository. Open issue counts are displayed but not treated as risk without severity and impact data. This score does not measure revenue, customer impact, strategic value, security or product quality. Tie-break: project name; equal scores are explicitly flagged.`;
+  return `**PORTFOLIO HEALTH**\n${ready}/${verifiedDeployments} projects with verified deployment telemetry report READY; ${failures.length} verified deployment errors. ${parsed.projects.length-verifiedDeployments} projects lack verified deployment telemetry. READY is deployment status, not proof of product quality.\n\n**TOP THREE — DYNAMIC EXECUTION PRIORITY**\n${lines}\n${tieNote}\n\n**7-DAY EXECUTION PLAN**\n${week}\nDay 7: Review evidence, refresh project data and re-rank the full portfolio.\n\n**WATCHLIST**\n${watch}\n\n**DATA GAPS**\n${gaps}\n\n**RANKING METHOD**\nExecution-urgency score: P1=30, P2=20, P3=10; deployment ERROR=+25, verified last commit older than 30 days for a linked software repository=+8. Missing data lowers confidence and is never added to urgency. GitHub activity is NOT APPLICABLE to projects without a linked repository. Open issue counts are displayed but not treated as risk without severity and impact data. This score does not measure revenue, customer impact, strategic value, security or product quality. Tie-break: project name; equal scores are explicitly flagged.`;
  }catch{return null;}
 }
 
