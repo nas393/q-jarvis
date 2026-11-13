@@ -51,7 +51,9 @@ export async function GET() {
       commitError:commits?.error ?? null,
       deployment:latest ? { state:latest.state, url:latest.url ? `https://${latest.url}` : null, created:latest.created, target:latest.target, inspectorUrl:latest.inspectorUrl } : null,
       deploymentError:deployment?.error ?? null,
-      integration:{ github:!!(ghToken && project.repo), vercel:!!(vToken && project.vercel) }
+      integration:{ github:!!(ghToken && project.repo), vercel:!!(vToken && project.vercel) },
+      githubDataStatus:!ghToken?"NOT_CONFIGURED":!project.repo?"NOT_LINKED":issues?.error||commits?.error?"FETCH_ERROR":"VERIFIED",
+      vercelDataStatus:!vToken?"NOT_CONFIGURED":!project.vercel?"NOT_LINKED":deployment?.error?"FETCH_ERROR":"VERIFIED"
     };
   }));
   return NextResponse.json({
