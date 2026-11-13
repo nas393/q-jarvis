@@ -1,6 +1,7 @@
 import {NextResponse} from "next/server";
 import {z} from "zod";
 import {getDb} from "@/lib/db";
+import {readSession} from "@/lib/session";
 import {createAIStream,getAIConfig} from "@/lib/ai/provider";
 import {jsonError,requestOriginAllowed} from "@/lib/http";
 import {writeAudit} from "@/lib/audit";
@@ -63,10 +64,12 @@ function buildPortfolioReview(raw:string):string|null{
 }
 
 export async function GET(){
+ if(!await readSession())return jsonError(401,"Unauthorized");
  try{const result=await getDb().query("SELECT id,title,status,created_at,updated_at FROM conversations WHERE user_id=$1 AND status='active' ORDER BY updated_at DESC LIMIT 50",[OWNER_ID]);return NextResponse.json({conversations:result.rows},{headers:{"Cache-Control":"no-store"}});}
  catch{return jsonError(503,"Conversation storage unavailable");}
 }
 export async function POST(request:Request){
+ if(!await readSession())return jsonError(401,"Unauthorized");
  console.error("q_chat_stage","post_received");
  if(!requestOriginAllowed(request))return jsonError(403,"Request origin rejected");
  const parsed=z.object({message:z.string().trim().min(1).max(12000),conversationId:z.string().uuid().optional(),portfolioContext:z.string().max(9000).optional()}).safeParse(await request.json().catch(()=>null));
