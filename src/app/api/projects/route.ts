@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { readSession } from "@/lib/session";
 
 export const dynamic = "force-dynamic";
 export const revalidate = 0;
@@ -34,6 +35,7 @@ async function vercel(projectId:string, token:string) {
 }
 
 export async function GET() {
+  if (!await readSession()) return NextResponse.json({ error: "Unauthorized" }, { status: 401, headers: { "Cache-Control": "no-store" } });
   const ghToken = process.env.GITHUB_TOKEN;
   const vToken = process.env.VERCEL_TOKEN;
   const data = await Promise.all(projects.map(async project => {
