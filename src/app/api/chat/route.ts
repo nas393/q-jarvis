@@ -74,8 +74,8 @@ export async function POST(request:Request){
    await writeAudit({userId:OWNER_ID,actorType:"owner",actorId:OWNER_ID,action:"chat.portfolio_review",outcome:"succeeded",details:{projects:JSON.parse(parsed.data.portfolioContext).projects.length,provider:"q-portfolio-engine"}});
    const encoder=new TextEncoder();
    const stream=new ReadableStream<Uint8Array>({start(controller){
-    controller.enqueue(encoder.encode(`data: ${JSON.stringify({delta:answer,conversationId:activeConversationId})}\\n\\n`));
-    controller.enqueue(encoder.encode(`data: ${JSON.stringify({done:true,conversationId:activeConversationId})}\\n\\n`));
+    controller.enqueue(encoder.encode(`data: ${JSON.stringify({delta:answer,conversationId:activeConversationId})}\n\n`));
+    controller.enqueue(encoder.encode(`data: ${JSON.stringify({done:true,conversationId:activeConversationId})}\n\n`));
     controller.close();
    }});
    return new Response(stream,{headers:{"Content-Type":"text/event-stream; charset=utf-8","Cache-Control":"no-cache, no-transform","X-Accel-Buffering":"no","X-Q-Response-Mode":"portfolio-engine"}});
