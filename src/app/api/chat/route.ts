@@ -18,27 +18,37 @@ function buildPortfolioReview(raw:string):string|null{
  try{
   const parsed=JSON.parse(raw) as {projects?:PortfolioProject[]};
   if(!Array.isArray(parsed.projects)||parsed.projects.length===0)return null;
-  const projects=parsed.projects;
-  const byName=(part:string)=>projects.find(p=>p.name.toUpperCase().includes(part));
-  const selected=[
-   {match:byName("NASSIM AI HQ"),why:"P1 personal operating hub; its Stage 1 Preview validation is the recorded gate before defining the next approved phase.",action:"Finish the Stage 1 Preview test pass and record the result.",done:"All agreed Preview checks pass and the validation report is committed."},
-   {match:byName("CERTIGO"),why:"P1 education platform; mobile lesson-reader validation is the recorded quality gate before feature expansion.",action:"Complete a focused mobile lesson-reader QA pass.",done:"Core lesson flows pass on target mobile sizes and QA sign-off is recorded."},
-   {match:byName("LUMERIS REEL MAKER"),why:"P1 creator tooling; an end-to-end export test is the clearest recorded workflow validation.",action:"Export one representative reel through the full workflow.",done:"Upload, processing, preview and export complete successfully, with the tested deployment URL recorded."}
-  ].filter(item=>item.match);
-  if(selected.length!==3)return null;
-  const deploymentReady=projects.filter(p=>p.deploymentState==="READY").length;
-  const targetUnknown=projects.filter(p=>!p.deploymentTarget||p.deploymentTarget==="UNKNOWN").map(p=>p.name);
-  const issuesUnknown=projects.filter(p=>p.openGitHubIssues===null||p.openGitHubIssues===undefined).map(p=>p.name);
-  const facts=(p:PortfolioProject)=>[
-   `priority ${p.registryPriority}`,
-   `deployment ${p.deploymentState??"UNKNOWN"} (target ${p.deploymentTarget??"UNKNOWN"})`,
-   `GitHub issues ${p.openGitHubIssues===null||p.openGitHubIssues===undefined?"UNKNOWN":p.openGitHubIssues}`,
-   `GitHub data ${p.githubDataStatus??"UNKNOWN"}`,
-   `Vercel data ${p.vercelDataStatus??"UNKNOWN"}`
-  ].join("; ");
-  const ranking=selected.map((item,index)=>`${index+1}. **${item.match!.name}** — **Verified:** ${facts(item.match!)}. **Assessment:** ${item.why} **Next:** ${item.action} **Done when:** ${item.done}`).join("\n");
-  const gaps=[targetUnknown.length?`deployment target unknown for ${targetUnknown.join(", ")}`: "",issuesUnknown.length?`issue counts unknown for ${issuesUnknown.join(", ")}`:""].filter(Boolean).join("; ")||"No material gaps in the fields supplied; product quality, security and usage still require separate validation.";
-  return `**PORTFOLIO HEALTH**\n${deploymentReady} of ${projects.length} projects report a READY deployment. This confirms deployment completion only, not product or operational health. GitHub issue counts and deployment targets are reported separately below; zero issues is not a risk rating.\n\n**TOP THREE**\n${ranking}\n\n**DATA GAPS**\n${gaps}\n\n**RANKING BASIS**\nThese three are selected from the P1 group because their recorded next actions are explicit validation gates for the HQ, education and creator-tool workflows. This is a qualitative prioritisation, not a measured business-impact score; DALIL and LUMERIS remain P1 contenders and need current product-validation evidence to compare confidently.`;
+  const now=Date.now();
+  const ranked=parsed.projects.map(p=>{
+   const priorityScore=p.registryPriority==="P1"?30:p.registryPriority==="P2"?20:p.registryPriority==="P3"?10:0;
+   const deploymentRisk=p.deploymentState==="ERROR"?25:!p.deploymentState||p.deploymentState==="UNKNOWN"?12:0;
+   const commitDate=typeof p.lastCommit==="object"&&p.lastCommit?p.lastCommit.date:undefined;
+   const ageDays=commitDate?Math.max(0,Math.floor((now-Date.parse(commitDate))/86400000)):null;
+   const inactivityRisk=ageDays!==null&&ageDays>30?8:0;
+   const dataGapRisk=(p.githubDataStatus!=="VERIFIED"?4:0)+(p.vercelDataStatus!=="VERIFIED"?4:0);
+   return {p,score:priorityScore+deploymentRisk+inactivityRisk+dataGapRisk,priorityScore,deploymentRisk,inactivityRisk,dataGapRisk,ageDays};
+  }).sort((a,b)=>b.score-a.score||a.p.name.localeCompare(b.p.name));
+  const top=ranked.slice(0,3);
+  const ready=parsed.projects.filter(p=>p.deploymentState==="READY").length;
+  const failures=parsed.projects.filter(p=>p.deploymentState==="ERROR");
+  const unknownTargets=parsed.projects.filter(p=>!p.deploymentTarget||p.deploymentTarget==="UNKNOWN").map(p=>p.name);
+  const unknownIssues=parsed.projects.filter(p=>p.openGitHubIssues===null||p.openGitHubIssues===undefined).map(p=>p.name);
+  const unknownCommits=parsed.projects.filter(p=>typeof p.lastCommit!=="object"||!p.lastCommit?.date).map(p=>p.name);
+  const recommendation=(p:PortfolioProject)=>{
+   if(p.deploymentState==="ERROR")return "Investigate the latest failed deployment, fix the first blocking build/runtime error, and rerun Preview.";
+   if(!p.deploymentState||p.deploymentState==="UNKNOWN")return "Verify the Vercel project mapping and retrieve the latest deployment before planning release work.";
+   return p.recordedNextAction;
+  };
+  const done=(p:PortfolioProject)=>{
+   if(p.deploymentState==="ERROR")return "A new Preview deployment reaches READY and the original failure is documented.";
+   if(!p.deploymentState||p.deploymentState==="UNKNOWN")return "The correct Vercel project and latest deployment status are verified.";
+   return "The recorded next action is completed and evidence (test result, artifact or decision) is captured.";
+  };
+  const lines=top.map((x,i)=>`${i+1}. **${x.p.name}** — **Score ${x.score}/75.** Priority ${x.p.registryPriority}; deployment ${x.p.deploymentState??"UNKNOWN"}; target ${x.p.deploymentTarget??"UNKNOWN"}; open GitHub issues ${x.p.openGitHubIssues??"UNKNOWN"}; last commit age ${x.ageDays===null?"UNKNOWN":x.ageDays+" days"}. **Score drivers:** priority ${x.priorityScore}, deployment risk ${x.deploymentRisk}, inactivity ${x.inactivityRisk}, data gaps ${x.dataGapRisk}. **Next:** ${recommendation(x.p)} **Done when:** ${done(x.p)}`).join("\n");
+  const watch=ranked.slice(3).map(x=>`${x.p.name} (${x.p.registryPriority}; score ${x.score})`).join("; ")||"None";
+  const gaps=[unknownTargets.length?"deployment target unknown: "+unknownTargets.join(", "):"",unknownIssues.length?"GitHub issue count unknown: "+unknownIssues.join(", "):"",unknownCommits.length?"latest commit unavailable: "+unknownCommits.join(", "):""].filter(Boolean).join("; ")||"No missing fields detected in the supplied integration snapshot.";
+  const week=top.map((x,i)=>`Day ${i*2+1}–${i*2+2}: ${x.p.name} — ${recommendation(x.p)}`).join("\n");
+  return `**PORTFOLIO HEALTH**\n${ready}/${parsed.projects.length} projects report READY deployments; ${failures.length} report deployment errors. READY is deployment status, not proof of product quality.\n\n**TOP THREE — DYNAMIC EXECUTION PRIORITY**\n${lines}\n\n**7-DAY EXECUTION PLAN**\n${week}\nDay 7: Review evidence, refresh project data and re-rank the full portfolio.\n\n**WATCHLIST**\n${watch}\n\n**DATA GAPS**\n${gaps}\n\n**RANKING METHOD**\nTransparent operational-urgency heuristic: P1=30, P2=20, P3=10; deployment ERROR=+25, missing deployment=+12, last commit older than 30 days=+8, each unverified GitHub/Vercel data source=+4. Open issue count is displayed but not treated as risk by itself. This score ranks execution urgency only; it does not measure revenue, customer impact, strategic value, security or product quality. Those require validated project-level inputs. Tie-break: project name.`;
  }catch{return null;}
 }
 
