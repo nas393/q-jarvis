@@ -1,9 +1,11 @@
 import { getDb } from "@/lib/db";
+import { requireOwner } from "@/lib/auth";
 import WebOS from "@/components/web-os";
 
 export const dynamic = "force-dynamic";
 
 export default async function DashboardPage() {
+  await requireOwner();
   const db = getDb();
   const ownerId = "owner";
   const [conversations, audit] = await Promise.all([
