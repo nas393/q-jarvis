@@ -37,7 +37,11 @@ async function vercel(projectId:string, token?:string):Promise<ApiResult<{deploy
     url.searchParams.set("limit","1");
     url.searchParams.set("teamId",TEAM_ID);
     const response=await fetch(url,{headers:{Authorization:`Bearer ${token}`},cache:"no-store"});
-    if(!response.ok)return {data:null,error:`Vercel API returned ${response.status}`,status:response.status===401||response.status===403?"AUTH_REQUIRED":"FETCH_ERROR"};
+    if(!response.ok) {
+      const body=(await response.text()).replace(/\s+/g," ").slice(0,240);
+      const status=response.status===401||response.status===403?"AUTH_REQUIRED":"FETCH_ERROR";
+      return {data:null,error:`Vercel API returned ${response.status}: ${body||"No error details returned"}`,status};
+    }
     return {data:await response.json(),status:"VERIFIED"};
   } catch(error) {
     return {data:null,error:error instanceof Error?error.message:"Vercel request failed",status:"FETCH_ERROR"};
