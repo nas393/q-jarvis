@@ -4,7 +4,7 @@ export type ProviderConfig={provider:"gemini"|"groq";model:string};
 type ProviderError={error?:{message?:string;code?:string;status?:string}};
 const GEMINI_MODEL=process.env.GEMINI_MODEL??"gemini-3.6-flash";
 const GROQ_MODEL=process.env.GROQ_MODEL??"openai/gpt-oss-120b";
-const SYSTEM_PROMPT="You are Q, the personal AI assistant inside a private operating system. Answer ordinary, harmless requests directly and helpfully. Be concise, accurate, and practical. If asked which model or provider is serving the current response, identify yourself as Q and state the configured provider honestly. Never refuse a harmless greeting, simple test, or request to identify the provider.";
+const SYSTEM_PROMPT="You are Q, the personal AI assistant inside a private operating system. Answer ordinary, harmless requests directly and helpfully. Be concise, accurate, and practical. Never refuse a harmless greeting, simple test, or request to identify the provider. The provider identity instruction in the following system message is authoritative.";\nfunction providerPrompt(provider:"gemini"|"groq",model:string):string{return `${SYSTEM_PROMPT}\\n\\nRuntime identity: You are Q. This response is being served by the ${provider.toUpperCase()} API using model ${model}. If asked which AI provider is serving this response, state exactly: \\"Q — AI provider: ${provider.toUpperCase()} (model: ${model}).\\" Do not claim to be OpenAI or ChatGPT unless the runtime provider is OpenAI.`;}
 
 export function getAIConfig():ProviderConfig{
  const geminiKey=process.env.GEMINI_API_KEY;
@@ -44,7 +44,7 @@ async function callGemini(input:ChatTurn[],signal?:AbortSignal):Promise<Response
  const upstream=await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${key}`,{
   method:"POST",headers:{"Content-Type":"application/json"},
   body:JSON.stringify({
-   systemInstruction:{parts:[{text:SYSTEM_PROMPT}]},
+   systemInstruction:{parts:[{text:providerPrompt("gemini",model)}]},
    contents:input.map(turn=>({role:turn.role==="assistant"?"model":"user",parts:[{text:turn.content}]})),
    generationConfig:{maxOutputTokens:1200,temperature:0.7}
   }),signal:combined
@@ -63,7 +63,7 @@ async function callGroq(input:ChatTurn[],signal?:AbortSignal):Promise<Response>{
  const combined=signal?AbortSignal.any([signal,timeout]):timeout;
  const upstream=await fetch("https://api.groq.com/openai/v1/chat/completions",{
   method:"POST",headers:{"Authorization":`Bearer ${key}`,"Content-Type":"application/json"},
-  body:JSON.stringify({model,messages:[{role:"system",content:SYSTEM_PROMPT},...input.map(turn=>({role:turn.role,content:turn.content}))],max_tokens:1200,temperature:0.7,stream:false}),
+  body:JSON.stringify({model,messages:[{role:"system",content:providerPrompt("groq",model)},...input.map(turn=>({role:turn.role,content:turn.content}))],max_tokens:1200,temperature:0.7,stream:false}),
   signal:combined
  });
  if(!upstream.ok){const err=await readError(upstream);return errorResponse(upstream.status,err.message,err.code,"groq",model);}
@@ -76,34 +76,35 @@ async function callGroq(input:ChatTurn[],signal?:AbortSignal):Promise<Response>{
 export async function createAIStream(input:ChatTurn[],signal?:AbortSignal):Promise<Response>{
  const geminiKey=process.env.GEMINI_API_KEY;
  const groqKey=process.env.GROQ_API_KEY;
- let geminiFailure:Response|undefined;
- if(geminiKey){
-  try{
-   const response=await callGemini(input,signal);
-   if(response.ok)return response;
-   geminiFailure=response;
-   const detail=await readError(response.clone());
-   console.error("gemini_provider_http_error",{status:response.status,code:detail.code,message:detail.message.slice(0,180),model:GEMINI_MODEL});
-  }catch(error){
-   if(signal?.aborted)throw error;
-   console.error("gemini_provider_unavailable",{message:error instanceof Error?error.message:"unknown"});
-  }
- }
+ let groqFailure:Response|undefined;
+ // Groq is the low-latency primary. Gemini remains available as a fallback.
  if(groqKey){
   try{
    const response=await callGroq(input,signal);
    if(response.ok)return response;
-   if(geminiFailure){
-    const primary=await readError(geminiFailure.clone());
-    const fallback=await readError(response.clone());
-    return errorResponse(response.status,`Gemini failed (${primary.code}); Groq fallback failed: ${fallback.message}`,fallback.code,"groq",GROQ_MODEL);
-   }
-   return response;
+   groqFailure=response;
+   const detail=await readError(response.clone());
+   console.error("groq_provider_http_error",{status:response.status,code:detail.code,message:detail.message.slice(0,180),model:GROQ_MODEL});
   }catch(error){
    if(signal?.aborted)throw error;
    console.error("groq_provider_unavailable",{message:error instanceof Error?error.message:"unknown"});
   }
  }
- if(geminiFailure)return geminiFailure;
- return errorResponse(503,"No AI provider is configured or available. Add GEMINI_API_KEY and optionally GROQ_API_KEY in Vercel.", "provider_unavailable","none","none");
+ if(geminiKey){
+  try{
+   const response=await callGemini(input,signal);
+   if(response.ok)return response;
+   if(groqFailure){
+    const primary=await readError(groqFailure.clone());
+    const fallback=await readError(response.clone());
+    return errorResponse(response.status,`Groq failed (${primary.code}); Gemini fallback failed: ${fallback.message}`,fallback.code,"gemini",GEMINI_MODEL);
+   }
+   return response;
+  }catch(error){
+   if(signal?.aborted)throw error;
+   console.error("gemini_provider_unavailable",{message:error instanceof Error?error.message:"unknown"});
+  }
+ }
+ if(groqFailure)return groqFailure;
+ return errorResponse(503,"No AI provider is configured or available. Add GROQ_API_KEY and optionally GEMINI_API_KEY in Vercel.","provider_unavailable","none","none");
 }
