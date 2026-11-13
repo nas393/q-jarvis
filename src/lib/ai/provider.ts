@@ -44,6 +44,7 @@ async function callGemini(input:ChatTurn[],signal?:AbortSignal):Promise<Response
  const upstream=await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${key}`,{
   method:"POST",headers:{"Content-Type":"application/json"},
   body:JSON.stringify({
+   systemInstruction:{parts:[{text:SYSTEM_PROMPT}]},
    contents:input.map(turn=>({role:turn.role==="assistant"?"model":"user",parts:[{text:turn.content}]})),
    generationConfig:{maxOutputTokens:1200,temperature:0.7}
   }),signal:combined
