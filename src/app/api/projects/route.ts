@@ -5,19 +5,14 @@ export const revalidate = 0;
 
 const TEAM_ID = "team_sWS7qi1gaGUI9lifKbbjERXj";
 const projects = [
-  { id:"q-jarvis", name:"NASSIM AI HQ / Q JARVIS", repo:"q-jarvis", vercel:"prj_G87tunS7S6xoJAZyZzEmRIhHAru4", priority:"P1", next:"Finish the core chat foundation, then expand the project headquarters.", area:"Personal HQ" },
+  { id:"q-jarvis", name:"NASSIM AI HQ / Q", repo:"q-jarvis", vercel:"prj_G87tunS7S6xoJAZyZzEmRIhHAru4", priority:"P1", next:"Build the Command Centre, verify integrations and keep the operating system stable.", area:"Personal HQ" },
   { id:"certigo", name:"CERTIGO", repo:"certigo-institute", vercel:"prj_ZxaLAJyMIXizGz8HqpflWC0TjSfG", priority:"P1", next:"Validate the mobile lesson reader and course quality before adding features.", area:"Education" },
-  { id:"dalil", name:"DALIL AL-BAZOURIEH", repo:"dalil-al-bazourieh", vercel:"prj_y4i0VPZXxzUhKLvNFOCxwdTSr94v", priority:"P1", next:"Review the current live build and confirm the approved design baseline.", area:"Directory" },
-  { id:"lumeris-maker", name:"LUMERIS Reel Maker", repo:"lumeris-reel-maker", vercel:"prj_UB1B7zuCnvIohc5VSOVZbirqei4E", priority:"P1", next:"Resolve the outstanding media-library and video playback issues.", area:"Creator tools", note:"Vercel deployment metadata currently points to photo-nw-vault; verify the Git link." },
-  { id:"photo-vault", name:"Android Photo Organizer", repo:"photo-nw-vault", vercel:null, priority:"P2", next:"Fix incomplete photo indexing and retest the full device library.", area:"Android" },
-  { id:"trading", name:"XAUUSD Trading Terminal", repo:"counter-trader", vercel:"prj_K230e9qdMTKfvAQRZgGr0MpD0b1J", priority:"P2", next:"Verify candle history, timeframe switching, chart interactions and signal integrity.", area:"Trading" },
-  { id:"lumeris", name:"LUMERIS Brand", repo:null, vercel:"prj_9en6kfMm515bnbkmAgXSpEumh88r", priority:"P2", next:"Maintain the content engine and consistent brand execution.", area:"Media" },
-  { id:"novae", name:"NOVAÉ", repo:"novae-site", vercel:"prj_Vkri4LKQpL3r24l9FpAIfoWBpx38", priority:"P3", next:"Keep the agency site stable; revisit growth work after P1 delivery.", area:"Agency" },
-  { id:"radio", name:"Radio Cedars", repo:"Radio-Cedars-", vercel:"prj_QRS67OXbiBMasOqgG2zVcrdHYJOR", priority:"P3", next:"Review roadmap and define the next release milestone.", area:"Media" },
-  { id:"price-intel", name:"Luanda Price Intel", repo:"luanda-price-intel", vercel:null, priority:"P2", next:"Reconnect or verify the repository and deployment ownership.", area:"Market intelligence", note:"Vercel project was not present in the current connected project listing." },
-  { id:"ala-hawa", name:"Ala Hawa", repo:"ala-hawa", vercel:"prj_fIQ16ehm4dg42uJgf0RApHS1qyMI", priority:"P3", next:"Review product status and decide whether to resume.", area:"Web app" },
-  { id:"counter-trader", name:"Counter Trader", repo:"counter-trader", vercel:"prj_Yj88nFe9nAEY97iUndUUZs42zAhs", priority:"P2", next:"Keep the trading strategy and execution app aligned with the terminal.", area:"Trading" },
-  { id:"angoalissar", name:"Angoalissar Commercial", repo:null, vercel:null, priority:"P1", next:"Track commercial priorities, category performance and key execution actions.", area:"Business" }
+  { id:"dalil", name:"DALIL AL-BAZOURIEH", repo:"dalil-al-bazourieh", vercel:"prj_y4i0VPZXxzUhKLvNFOCxwdTSr94v", priority:"P1", next:"Protect the approved design baseline and validate the current mobile experience.", area:"Directory" },
+  { id:"lumeris", name:"LUMERIS", repo:null, vercel:"prj_9en6kfMm515bnbkmAgXSpEumh88r", priority:"P1", next:"Maintain the cinematic content system and consistent brand execution.", area:"Media" },
+  { id:"lumeris-maker", name:"LUMERIS REEL MAKER", repo:"lumeris-reel-maker", vercel:null, priority:"P1", next:"Stabilise the media workflow and verify the correct deployment connection.", area:"Creator tools", note:"Deployment mapping intentionally withheld until the Vercel project link is verified." },
+  { id:"xauusd", name:"XAU/USD TRADING HQ", repo:"counter-trader", vercel:"prj_K230e9qdMTKfvAQRZgGr0MpD0b1J", priority:"P2", next:"Validate market data, chart interactions, signal integrity and risk controls.", area:"Trading" },
+  { id:"novae", name:"NOVAÉ", repo:"novae-site", vercel:"prj_Vkri4LKQpL3r24l9FpAIfoWBpx38", priority:"P2", next:"Maintain the agency platform and revisit growth work after P1 delivery.", area:"Agency" },
+  { id:"radio", name:"RADIO CEDARS", repo:"Radio-Cedars-", vercel:"prj_QRS67OXbiBMasOqgG2zVcrdHYJOR", priority:"P3", next:"Review the roadmap and define the next release milestone.", area:"Media" }
 ];
 
 async function github(path:string, token:string) {
