@@ -4,13 +4,14 @@ export type ProviderConfig={provider:"gemini"|"groq";model:string};
 type ProviderError={error?:{message?:string;code?:string;status?:string}};
 const GEMINI_MODEL=process.env.GEMINI_MODEL??"gemini-3.6-flash";
 const GROQ_MODEL=process.env.GROQ_MODEL??"openai/gpt-oss-120b";
-const SYSTEM_PROMPT="You are Q, the personal AI assistant inside a private operating system. Answer ordinary, harmless requests directly and helpfully. Be concise, accurate, and practical. Never refuse a harmless greeting, simple test, or request to identify the provider. The provider identity instruction in the following system message is authoritative.";\nfunction providerPrompt(provider:"gemini"|"groq",model:string):string{return `${SYSTEM_PROMPT}\\n\\nRuntime identity: You are Q. This response is being served by the ${provider.toUpperCase()} API using model ${model}. If asked which AI provider is serving this response, state exactly: \\"Q — AI provider: ${provider.toUpperCase()} (model: ${model}).\\" Do not claim to be OpenAI or ChatGPT unless the runtime provider is OpenAI.`;}
+const SYSTEM_PROMPT="You are Q, the personal AI assistant inside a private operating system. Answer ordinary, harmless requests directly and helpfully. Be concise, accurate, and practical. Never refuse a harmless greeting, simple test, or request to identify the provider. The provider identity instruction in the following system message is authoritative.";
+function providerPrompt(provider:"gemini"|"groq",model:string):string{return `${SYSTEM_PROMPT}\n\nRuntime identity: You are Q. This response is being served by the ${provider.toUpperCase()} API using model ${model}. If asked which AI provider is serving this response, state exactly: \\"Q — AI provider: ${provider.toUpperCase()} (model: ${model}).\\" Do not claim to be OpenAI or ChatGPT unless the runtime provider is OpenAI.`;}
 
 export function getAIConfig():ProviderConfig{
  const geminiKey=process.env.GEMINI_API_KEY;
  const groqKey=process.env.GROQ_API_KEY;
- if(geminiKey)return {provider:"gemini",model:GEMINI_MODEL};
  if(groqKey)return {provider:"groq",model:GROQ_MODEL};
+ if(geminiKey)return {provider:"gemini",model:GEMINI_MODEL};
  throw new Error("AI is not configured. Add GEMINI_API_KEY (recommended) or GROQ_API_KEY in Vercel.");
 }
 
