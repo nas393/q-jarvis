@@ -29,7 +29,7 @@ export async function POST(request:Request){
   const db=getDb();
   const throttle=await db.query("INSERT INTO auth_login_attempts (bucket_hash,window_started_at,attempt_count) VALUES ($1,now(),1) ON CONFLICT (bucket_hash) DO UPDATE SET attempt_count=CASE WHEN auth_login_attempts.window_started_at<now()-interval '15 minutes' THEN 1 ELSE auth_login_attempts.attempt_count+1 END,window_started_at=CASE WHEN auth_login_attempts.window_started_at<now()-interval '15 minutes' THEN now() ELSE auth_login_attempts.window_started_at END RETURNING attempt_count",[bucket]);
   if(Number(throttle.rows[0]?.attempt_count??99)>6){await writeAudit({action:"auth.login",outcome:"blocked",details:{reason:"rate_limit"}});return fail(429,"Too many attempts. Try again in 15 minutes.");}
-  const owner=await db.query("SELECT id,email,role FROM users WHERE role='owner' ORDER BY created_at ASC LIMIT 1");
+  const owner=await db.query("SELECT id,email,role FROM users WHERE role='owner' LIMIT 1");
   const account=owner.rows[0];
   const supplied=Buffer.from(parsed.data.passkey,"utf8");
   const expected=Buffer.from(env.OWNER_PASSKEY,"utf8");
