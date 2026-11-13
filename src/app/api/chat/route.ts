@@ -71,7 +71,7 @@ export async function POST(request:Request){
    const answer=deterministicReview;
    await db.query("INSERT INTO messages (conversation_id,role,content,metadata) VALUES ($1,'assistant',$2,$3::jsonb)",[activeConversationId,answer,JSON.stringify({provider:"q-portfolio-engine",model:"evidence-template-v1"})]);
    await db.query("UPDATE conversations SET updated_at=now() WHERE id=$1",[activeConversationId]);
-   await writeAudit({userId:OWNER_ID,actorType:"owner",actorId:OWNER_ID,action:"chat.portfolio_review",outcome:"succeeded",details:{projects:JSON.parse(parsed.data.portfolioContext).projects.length,provider:"q-portfolio-engine"}});
+   await writeAudit({userId:OWNER_ID,actorType:"owner",actorId:OWNER_ID,action:"chat.portfolio_review",outcome:"succeeded",details:{projects:JSON.parse(parsed.data.portfolioContext!).projects.length,provider:"q-portfolio-engine"}});
    const encoder=new TextEncoder();
    const stream=new ReadableStream<Uint8Array>({start(controller){
     controller.enqueue(encoder.encode(`data: ${JSON.stringify({delta:answer,conversationId:activeConversationId})}\n\n`));
