@@ -19,7 +19,8 @@ function calculate(s:string):number {
  const n=expr();if(i!==t.length||!Number.isFinite(n))throw Error("Invalid expression");return n;
 }
 export default function WebOS({conversationCount=0,activityCount=0}:{conversationCount?:number;activityCount?:number}) {
- const [theme,setTheme]=useState<"dark"|"light">("dark"),[accent,setAccent]=useState<keyof typeof accents>("green"),[wallpaper,setWallpaper]=useState("matrix");\n const [simpleMobile,setSimpleMobile]=useState(false);
+ const [theme,setTheme]=useState<"dark"|"light">("dark"),[accent,setAccent]=useState<keyof typeof accents>("green"),[wallpaper,setWallpaper]=useState("matrix");
+ const [simpleMobile,setSimpleMobile]=useState(false);
  const [windows,setWindows]=useState<Win[]>([]),[active,setActive]=useState<number|null>(null),[z,setZ]=useState(10),[next,setNext]=useState(1);
  const [start,setStart]=useState(false),[quick,setQuick]=useState(false),[clock,setClock]=useState(new Date());
  const [drag,setDrag]=useState<{id:number;dx:number;dy:number}|null>(null),[positions,setPositions]=useState<Record<string,{x:number;y:number}>>({});
@@ -28,7 +29,8 @@ export default function WebOS({conversationCount=0,activityCount=0}:{conversatio
  const [lines,setLines]=useState<string[]>(["MATRIX OS TERMINAL [Version 1.0]","Type 'help' to list available commands.",""]),[command,setCommand]=useState("");
  const terminal=useRef<HTMLDivElement>(null);
  useEffect(()=>{try{const s=JSON.parse(localStorage.getItem("matrix-os-settings")||"{}");setSimpleMobile(localStorage.getItem("matrix-os-simple-mobile")==="true");if(s.theme==="light"||s.theme==="dark")setTheme(s.theme);if(s.accent in accents)setAccent(s.accent);if(wallpapers.includes(s.wallpaper))setWallpaper(s.wallpaper);const n=JSON.parse(localStorage.getItem("matrix-os-notes")||"[]");if(Array.isArray(n)){setNotes(n);if(n[0])setSelected(n[0].id)}const p=JSON.parse(localStorage.getItem("matrix-os-shortcuts")||"{}");if(p&&typeof p==="object")setPositions(p)}catch{}},[]);
- useEffect(()=>{localStorage.setItem("matrix-os-settings",JSON.stringify({theme,accent,wallpaper}))},[theme,accent,wallpaper]);\n useEffect(()=>{localStorage.setItem("matrix-os-simple-mobile",String(simpleMobile))},[simpleMobile]);
+ useEffect(()=>{localStorage.setItem("matrix-os-settings",JSON.stringify({theme,accent,wallpaper}))},[theme,accent,wallpaper]);
+ useEffect(()=>{localStorage.setItem("matrix-os-simple-mobile",String(simpleMobile))},[simpleMobile]);
  useEffect(()=>{localStorage.setItem("matrix-os-notes",JSON.stringify(notes))},[notes]);
  useEffect(()=>{localStorage.setItem("matrix-os-shortcuts",JSON.stringify(positions))},[positions]);
  useEffect(()=>{const id=window.setInterval(()=>setClock(new Date()),1000);return()=>window.clearInterval(id)},[]);
