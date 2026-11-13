@@ -1,18 +1,12 @@
 "use client";
 
-import { FormEvent, useEffect, useState } from "react";
+import { FormEvent, useState } from "react";
 
-export default function LoginForm() {
+export default function LoginForm({ initialError = "" }: { initialError?: string }) {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [error, setError] = useState("");
+  const [error, setError] = useState(initialError);
   const [busy, setBusy] = useState(false);
-
-  useEffect(() => {
-    const params = new URLSearchParams(window.location.search);
-    const message = params.get("error");
-    if (message) setError(message);
-  }, []);
 
   async function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -53,7 +47,7 @@ export default function LoginForm() {
           <label>Password
             <input type="password" name="password" autoComplete="current-password" required maxLength={256} value={password} onChange={event => setPassword(event.target.value)} />
           </label>
-          {error && <p className="form-error" role="alert">{error}</p>}
+          {error && <p className="form-error" role="alert" aria-live="polite">{error}</p>}
           <button type="submit" disabled={busy || !email.trim() || !password}>{busy ? "Authenticating…" : "Enter private workspace"}</button>
         </form>
         <p className="login-foot">OWNER-ONLY ACCESS <span>•</span> SECURE SESSION</p>
