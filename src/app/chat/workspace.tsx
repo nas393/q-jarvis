@@ -1,6 +1,6 @@
 "use client";
 import {useCallback,useEffect,useMemo,useRef,useState} from "react";
-type Project={id:string;name:string;priority:string;next:string;area:string;repo:string|null;deployment:{state:string;url:string|null;created:number}|null;openIssues:number|null;lastCommit:{message:string;date:string}|null;};
+type Project={id:string;name:string;priority:string;next:string;area:string;repo:string|null;vercel:string|null;deployment:{state:string;url:string|null;created:number}|null;openIssues:number|null;lastCommit:{message:string;date:string}|null;};
 type Task={id:string;text:string;done:boolean;created:number};
 type Message={role:"user"|"assistant";content:string};
 const starter=["Review all active projects and identify the biggest risks.","Prepare my top priorities for today.","Check deployment health across my projects.","Analyse CERTIGO and recommend the next five actions."];
