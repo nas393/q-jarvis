@@ -14,7 +14,7 @@ export async function GET(){
 export async function POST(request:Request){
  console.error("q_chat_stage","post_received");
  if(!requestOriginAllowed(request))return jsonError(403,"Request origin rejected");
- const parsed=z.object({message:z.string().trim().min(1).max(12000),conversationId:z.string().uuid().optional()}).safeParse(await request.json().catch(()=>null));
+ const parsed=z.object({message:z.string().trim().min(1).max(12000),conversationId:z.string().uuid().optional(),portfolioContext:z.string().max(9000).optional()}).safeParse(await request.json().catch(()=>null));
  if(!parsed.success)return jsonError(400,"Enter a message (maximum 12,000 characters).");
  let config;try{config=getAIConfig();}catch{return jsonError(503,"AI provider is not configured. Add GEMINI_API_KEY and optionally GROQ_API_KEY in Vercel.");}
  const db=getDb();let conversationId=parsed.data.conversationId;console.error("q_chat_stage","provider_configured");
@@ -25,7 +25,11 @@ export async function POST(request:Request){
   await db.query("INSERT INTO messages (conversation_id,role,content) VALUES ($1,'user',$2)",[activeConversationId,parsed.data.message]);
   const history=await db.query("SELECT role,content FROM messages WHERE conversation_id=$1 AND role IN ('user','assistant') ORDER BY created_at DESC LIMIT 30",[activeConversationId]);
   const turns=history.rows.reverse().map((row:{role:"user"|"assistant";content:string})=>({role:row.role,content:row.content}));
-  console.error("q_chat_stage","history_loaded",{turns:turns.length});
+  if(parsed.data.portfolioContext?.trim()){
+   const latestUser=[...turns].reverse().find(turn=>turn.role==="user");
+   if(latestUser)latestUser.content=`CURRENT VERIFIED PROJECT PORTFOLIO (use this data; do not claim you cannot access the project list):\n${parsed.data.portfolioContext.trim()}\n\nUSER REQUEST:\n${latestUser.content}`;
+  }
+  console.error("q_chat_stage","history_loaded",{turns:turns.length,portfolioContext:!!parsed.data.portfolioContext});
   const upstream=await createAIStream(turns,request.signal);
   const actualProvider=upstream.headers.get("x-ai-provider")??config.provider;
   const actualModel=upstream.headers.get("x-ai-model")??config.model;
