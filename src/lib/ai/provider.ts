@@ -81,7 +81,9 @@ export async function createAIStream(input:ChatTurn[],signal?:AbortSignal):Promi
   try{
    const response=await callGemini(input,signal);
    if(response.ok)return response;
-   geminiFailure=response;\n   const detail=await readError(response.clone());\n   console.error("gemini_provider_http_error",{status:response.status,code:detail.code,message:detail.message.slice(0,180),model:GEMINI_MODEL});
+   geminiFailure=response;
+   const detail=await readError(response.clone());
+   console.error("gemini_provider_http_error",{status:response.status,code:detail.code,message:detail.message.slice(0,180),model:GEMINI_MODEL});
   }catch(error){
    if(signal?.aborted)throw error;
    console.error("gemini_provider_unavailable",{message:error instanceof Error?error.message:"unknown"});
