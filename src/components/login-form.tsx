@@ -1,12 +1,18 @@
 "use client";
 
-import { FormEvent, useState } from "react";
+import { FormEvent, useEffect, useState } from "react";
 
 export default function LoginForm() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
   const [busy, setBusy] = useState(false);
+
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const message = params.get("error");
+    if (message) setError(message);
+  }, []);
 
   async function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -40,7 +46,7 @@ export default function LoginForm() {
         <p className="eyebrow">PRIVATE OWNER ACCESS</p>
         <h1>Sign in to your workspace</h1>
         <p className="muted">This environment is restricted to its owner. Authenticate to continue.</p>
-        <form className="login-form" onSubmit={submit}>
+        <form className="login-form" method="post" action="/api/auth/login" onSubmit={submit}>
           <label>Email address
             <input type="email" name="email" autoComplete="username" required maxLength={254} value={email} onChange={event => setEmail(event.target.value)} />
           </label>
