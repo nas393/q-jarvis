@@ -1,0 +1,9 @@
+import {NextResponse} from "next/server";
+import {z} from "zod";
+import {readSession} from "@/lib/session";
+import {getDb} from "@/lib/db";
+import {jsonError,requestOriginAllowed} from "@/lib/http";
+import {writeAudit} from "@/lib/audit";
+export const runtime="nodejs",dynamic="force-dynamic";
+export async function GET(){const session=await readSession();if(!session)return jsonError(401,"Unauthorized");try{const result=await getDb().query("SELECT id,title,status,created_at,updated_at FROM conversations WHERE user_id=$1 ORDER BY updated_at DESC LIMIT 50",[session.id]);return NextResponse.json({conversations:result.rows},{headers:{"Cache-Control":"no-store"}});}catch{return jsonError(503,"Conversation storage unavailable");}}
+export async function POST(request:Request){if(!requestOriginAllowed(request))return jsonError(403,"Request origin rejected");const session=await readSession();if(!session)return jsonError(401,"Unauthorized");const parsed=z.object({title:z.string().trim().min(1).max(120).optional()}).safeParse(await request.json().catch(()=>null));if(!parsed.success)return jsonError(400,"Invalid conversation payload");try{const result=await getDb().query("INSERT INTO conversations (user_id,title) VALUES ($1,$2) RETURNING id,title,status,created_at,updated_at",[session.id,parsed.data.title??"New conversation"]);await writeAudit({userId:session.id,actorType:"owner",actorId:session.id,action:"conversation.created",outcome:"succeeded"});return NextResponse.json({conversation:result.rows[0]},{status:201,headers:{"Cache-Control":"no-store"}});}catch{return jsonError(503,"Conversation could not be saved");}}

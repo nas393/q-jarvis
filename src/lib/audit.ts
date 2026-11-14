@@ -1,0 +1,3 @@
+import {getDb} from "@/lib/db";
+type Outcome="started"|"succeeded"|"failed"|"blocked"|"cancelled";
+export async function writeAudit(input:{userId?:string|null;actorType?:"owner"|"system";actorId?:string|null;action:string;outcome:Outcome;details?:Record<string,unknown>}){try{await getDb().query("INSERT INTO activity_logs (user_id,actor_type,actor_id,action,outcome,details) VALUES ($1,$2,$3,$4,$5,$6::jsonb)",[input.userId??null,input.actorType??"system",input.actorId??null,input.action,input.outcome,JSON.stringify(input.details??{})]);}catch(e){console.error("audit_write_failed",{action:input.action,error:e instanceof Error?e.name:"unknown"});}}

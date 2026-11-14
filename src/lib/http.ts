@@ -1,0 +1,3 @@
+import {NextResponse} from "next/server";
+export function jsonError(status:number,error:string){return NextResponse.json({error},{status,headers:{"Cache-Control":"no-store"}});}
+export function requestOriginAllowed(request:Request){const origin=request.headers.get("origin");if(!origin)return true;try{const host=request.headers.get("x-forwarded-host")??request.headers.get("host");return Boolean(host&&new URL(origin).host===host);}catch{return false;}}
