@@ -4,7 +4,7 @@ import { readSession } from "@/lib/session";
 export const dynamic = "force-dynamic";
 export const revalidate = 0;
 
-const TEAM_ID = "team_sWS7qi1gaGUI9lifKbbjERXJj";
+const TEAM_ID = "team_sWS7qi1gaGUI9lifKbbjERXj";
 type ApiResult<T> = { data:T; error?:never; status:"VERIFIED" } | { data:null; error:string; status:"FETCH_ERROR"|"AUTH_REQUIRED"|"NOT_CONFIGURED"|"NOT_LINKED" };
 const projects = [
   { id:"q-jarvis", name:"NASSIM AI HQ / Q", repo:"q-jarvis", repoVisibility:"public", vercel:"prj_G87tunS7S6xoJAZyZzEmRIhHAru4", priority:"P1", next:"Complete Stage 1 Preview validation, confirm portfolio intelligence and system health, then define the next approved phase.", area:"Personal HQ" },
