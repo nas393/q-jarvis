@@ -50,17 +50,18 @@ export default function WebOS({conversationCount=0,activityCount=0}:{conversatio
      </article>
      <div className="q-side-stack">
       <article className="q-panel q-intelligence"><header><div><small>DECISION SUPPORT / 02</small><h3>Q Intelligence</h3></div><span className="q-live">{loading?"SYNCING":data?"LIVE DATA":"OFFLINE"}</span></header>
-       <div className="q-insight"><b>↗</b><span><strong>Deployment coverage</strong><small>{data?`${vercelVerified} of ${projects.length} Vercel connections verified · ${ready} READY · ${failed} ERROR`:"Waiting for authenticated project data"}</small></span></div>
-       <div className="q-insight"><b>◈</b><span><strong>Repository visibility</strong><small>{data?`${githubVerified} repositories verified · ${issueTotal} open issues reported`:"GitHub integration not yet verified"}</small></span></div>
-       <div className="q-insight"><b>◎</b><span><strong>Attention required</strong><small>{data?`${unresolved} projects have at least one unverified integration`:"No recommendations until data is available"}</small></span></div>
+       <div className="q-insight"><b>↗</b><span><strong>Flour volume +12.6% YoY</strong><small>Bakeries +34.8% (1,069)</small></span></div>
+       <div className="q-insight"><b>↘</b><span><strong>Gross margin 0.1%</strong><small>Action: pricing & cost review</small></span></div>
+       <div className="q-insight"><b>▥</b><span><strong>Factory utilization 40%</strong><small>Focus: UHT (25%), Butter (10%)</small></span></div>
+       <div className="q-insight"><b>◎</b><span><strong>LUMERIS engagement +18%</strong><small>Next: 3 reels (mindset, discipline, power)</small></span></div>
       </article>
       <article className="q-panel q-actions"><header><div><small>WORKSPACE / 03</small><h3>Quick Actions</h3></div></header><div className="q-action-grid"><a href="/projects"><b>＋</b><span>Projects</span></a><a href="/chat"><b>✧</b><span>Q Assistant</span></a><a href="/projects"><b>↗</b><span>Deployments</span></a><a href="/projects"><b>▥</b><span>Reports</span></a></div></article>
      </div>
      <article className="q-panel q-agenda"><header><div><small>OPERATING RHYTHM / 04</small><h3>Today’s Agenda</h3></div><span>LUANDA · GMT+1</span></header>
-      <div className="q-agenda-list"><p><time>01</time><span><b>Q OS</b><small>Validate the new executive command center</small></span></p><p><time>02</time><span><b>CERTIGO</b><small>Mobile lesson-reader quality assurance</small></span></p><p><time>03</time><span><b>DALIL AL-BAZOURIEH</b><small>Protect approved design baseline</small></span></p><p><time>04</time><span><b>PORTFOLIO</b><small>Resolve confirmed integration gaps</small></span></p></div>
+      <div className="q-agenda-list"><p><time>08:00</time><span><b>Training</b></span></p><p><time>10:00</time><span><b>Portfolio Review (Q Projects)</b></span></p><p><time>14:00</time><span><b>Commercial Update</b></span></p><p><time>16:00</time><span><b>CERTIGO – Lesson Reader QA</b></span></p><p><time>18:30</time><span><b>Content – LUMERIS (3 Reels)</b></span></p></div>
      </article>
      <article className="q-panel q-alerts"><header><div><small>ATTENTION REQUIRED / 05</small><h3>Alerts & Watchlist</h3></div><b className="q-alert-count">{data?failed:"—"}</b></header>
-      <p><i className="red"/> {data?`${failed} deployment errors detected`:"Deployment state not yet verified"} <span>›</span></p><p><i className="amber"/> {data?`${projects.filter(p=>p.githubDataStatus!=="VERIFIED").length} projects without verified GitHub data`:"GitHub status not yet verified"} <span>›</span></p><p><i className="amber"/> {data?`${projects.filter(p=>p.deploymentDataStatus!=="VERIFIED").length} projects without verified Vercel data`:"Vercel status not yet verified"} <span>›</span></p>
+      <p><i className="red"/>Wheat Flour margin at 0.1% <span>›</span></p><p><i className="amber"/>Packaging – YA 200ml (delay) <span>›</span></p><p><i className="amber"/>XAU/USD – High volatility (⚠) <span>›</span></p>
      </article>
     </section>
     <section className="q-bottom-grid">
