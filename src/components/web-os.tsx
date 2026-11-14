@@ -8,14 +8,13 @@ const marks=["Q","C","د","L","▶","X","N","R"];
 const types=["Personal HQ / AI","Education / Certification","Business Directory","Media / Mindset","Creator Tools","Trading / Markets","Branding / Marketing","Media / Audio"];
 const hrefs=["/dashboard","https://certigo-gray.vercel.app","https://github.com/nas393/dalil-al-bazourieh","#","https://github.com/nas393/lumeris-reel-maker","https://github.com/nas393/counter-trader","https://github.com/nas393/novae-site","https://github.com/nas393/Radio-Cedars-"];
 const nav=[["⌂","Command Center","/dashboard"],["▱","Projects","/projects"],["▥","Business Intelligence","/projects"],["⌁","Trading HQ","/projects"],["◈","AI Studio","/chat"],["▷","Media & Content","/projects"],["▤","Operations","/projects"],["◷","Analytics","/projects"],["▣","Resources","/projects"]];
-const shortState=(p:Project)=>p.deployment?.state??p.deploymentDataStatus??"UNVERIFIED";
 const nice=(s:string)=>s.replaceAll("_"," ");
 export default function WebOS({conversationCount=0,activityCount=0}:{conversationCount?:number;activityCount?:number}){
  const [clock,setClock]=useState(new Date()),[data,setData]=useState<Telemetry|null>(null),[loading,setLoading]=useState(true),[error,setError]=useState(""),[query,setQuery]=useState(""),[searchOpen,setSearchOpen]=useState(false),[active,setActive]=useState("Command Center");
  const refresh=useCallback(async()=>{setLoading(true);setError("");try{const r=await fetch("/api/projects",{cache:"no-store"});if(!r.ok)throw new Error(r.status===401?"Sign in to load live project telemetry":`Portfolio API returned ${r.status}`);setData(await r.json());}catch(e){setError(e instanceof Error?e.message:"Telemetry unavailable");}finally{setLoading(false)}},[]);
  useEffect(()=>{const t=window.setInterval(()=>setClock(new Date()),1000);return()=>window.clearInterval(t)},[]);
  useEffect(()=>{refresh();const t=window.setInterval(refresh,300000);return()=>window.clearInterval(t)},[refresh]);
- const projects=data?.projects??[];
+ const projects=useMemo(()=>data?.projects??[],[data]);
  const filtered=useMemo(()=>projects.filter(p=>(p.name+" "+p.area+" "+(p.repo??"")).toLowerCase().includes(query.toLowerCase())),[projects,query]);
  const ready=projects.filter(p=>p.deployment?.state==="READY").length,failed=projects.filter(p=>p.deployment?.state==="ERROR").length;
  const vercelVerified=projects.filter(p=>p.deploymentDataStatus==="VERIFIED").length;
@@ -58,7 +57,7 @@ export default function WebOS({conversationCount=0,activityCount=0}:{conversatio
       </article>
       <article className="q-panel q-actions"><header><div><small>WORKSPACE / 03</small><h3>Quick Actions</h3></div></header><div className="q-action-grid"><a href="/projects"><b>＋</b><span>Projects</span></a><a href="/chat"><b>✧</b><span>Q Assistant</span></a><a href="/projects"><b>↗</b><span>Deployments</span></a><a href="/projects"><b>▥</b><span>Reports</span></a></div></article>
      </div>
-     <article className="q-panel q-agenda"><header><div><small>OPERATING RHYTHM / 04</small><h3>Today's Agenda</h3></div><span>LUANDA · GMT+1</span></header>
+     <article className="q-panel q-agenda"><header><div><small>OPERATING RHYTHM / 04</small><h3>Today’s Agenda</h3></div><span>LUANDA · GMT+1</span></header>
       <div className="q-agenda-list"><p><time>01</time><span><b>Q OS</b><small>Validate the new executive command center</small></span></p><p><time>02</time><span><b>CERTIGO</b><small>Mobile lesson-reader quality assurance</small></span></p><p><time>03</time><span><b>DALIL AL-BAZOURIEH</b><small>Protect approved design baseline</small></span></p><p><time>04</time><span><b>PORTFOLIO</b><small>Resolve confirmed integration gaps</small></span></p></div>
      </article>
      <article className="q-panel q-alerts"><header><div><small>ATTENTION REQUIRED / 05</small><h3>Alerts & Watchlist</h3></div><b className="q-alert-count">{data?failed:"—"}</b></header>
